@@ -1,10 +1,23 @@
-import { useFonts } from 'expo-font';
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+/**
+ * TradeMind — Root Layout
+ * Sets up ThemeProvider, fonts, and navigation stack
+ */
+
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from '@expo-google-fonts/inter';
+import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
+import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/components/useColorScheme';
+import { ThemeProvider, useTheme } from '@/src/theme';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -12,7 +25,6 @@ export {
 } from 'expo-router';
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
   initialRouteName: '(tabs)',
 };
 
@@ -20,37 +32,103 @@ export const unstable_settings = {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+  const [fontsLoaded, fontError] = useFonts({
+    'Inter-Regular': Inter_400Regular,
+    'Inter-Medium': Inter_500Medium,
+    'Inter-SemiBold': Inter_600SemiBold,
+    'Inter-Bold': Inter_700Bold,
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
-    if (error) throw error;
-  }, [error]);
+    if (fontError) throw fontError;
+  }, [fontError]);
 
   useEffect(() => {
-    if (loaded) {
+    if (fontsLoaded) {
       SplashScreen.hideAsync();
     }
-  }, [loaded]);
+  }, [fontsLoaded]);
 
-  if (!loaded) {
+  if (!fontsLoaded) {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <ThemeProvider>
+      <RootLayoutNav />
+    </ThemeProvider>
+  );
 }
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+  const theme = useTheme();
+
+  // Create navigation theme from our design system
+  const navTheme = theme.isDark ? {
+    ...DarkTheme,
+    colors: {
+      ...DarkTheme.colors,
+      primary: theme.colors.primary,
+      background: theme.colors.background,
+      card: theme.colors.backgroundSecondary,
+      text: theme.colors.text,
+      border: theme.colors.border as string,
+      notification: theme.colors.loss,
+    },
+  } : {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      primary: theme.colors.primary,
+      background: theme.colors.background,
+      card: theme.colors.backgroundSecondary,
+      text: theme.colors.text,
+      border: theme.colors.border as string,
+      notification: theme.colors.loss,
+    },
+  };
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <NavigationThemeProvider value={navTheme}>
+      <StatusBar style={theme.isDark ? 'light' : 'dark'} />
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+        <Stack.Screen
+          name="add-trade"
+          options={{
+            presentation: 'modal',
+            title: 'Add Trade',
+            headerStyle: { backgroundColor: theme.colors.backgroundSecondary },
+            headerTintColor: theme.colors.text,
+          }}
+        />
+        <Stack.Screen
+          name="add-journal"
+          options={{
+            presentation: 'modal',
+            title: 'Add Journal',
+            headerStyle: { backgroundColor: theme.colors.backgroundSecondary },
+            headerTintColor: theme.colors.text,
+          }}
+        />
+        <Stack.Screen
+          name="manage-accounts"
+          options={{
+            presentation: 'modal',
+            title: 'Kelola Akun',
+            headerStyle: { backgroundColor: theme.colors.backgroundSecondary },
+            headerTintColor: theme.colors.text,
+          }}
+        />
+        <Stack.Screen
+          name="modal"
+          options={{
+            presentation: 'modal',
+            headerStyle: { backgroundColor: theme.colors.backgroundSecondary },
+            headerTintColor: theme.colors.text,
+          }}
+        />
       </Stack>
-    </ThemeProvider>
+    </NavigationThemeProvider>
   );
 }
